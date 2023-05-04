@@ -24,7 +24,7 @@ def addIfNotSeen(state, queue, seen):
 def addIfNotSeenPriority(node, queue, seen):
   if (makeHash(node.state) not in seen):
     queue.put((computeManhattan(node), node))
-    seen.update({makeHash(node.state): True})
+    seen.update({makeHash(node.state): node.parent})
     # print(makeHash(state))
 
 def uniform():
@@ -80,29 +80,44 @@ def uniform():
 
 
 def computeManhattan(node):
-  # dist = 0 # manhattan for just 1
-  # for i, list in enumerate(state):
-  #   for j, item in enumerate(list):
-  #     if item == "1":
-  #       dist = j + (1-i)
-      
-  dist = 0 # manhattan for 1 and spaces to be forward
-  for i, list in enumerate(node.state):
-    for j, item in enumerate(list):
-      if item == "1":
-        dist = j + (1-i)
+  global phase
+
+  if phase < 7:
+    dist = 0 # manhattan for just each square in order (DP approach ish?)
+    for i, list in enumerate(node.state):
+      for j, item in enumerate(list):
+        if item != "x" and item != " ":         
+          if item == str(phase+1): # target soldier manhattan distance           
+            dist += (abs(int(item) - (j+1))) * 3
+            if (abs(int(item) - (j+1))) * 3 == 0: #if target soldier is in his position, move to next phase
+              phase += 1
+          elif int(item) < phase+1: # moving soldiers that are solved adds large penalty
+            dist += (abs(int(item) - (j+1))) * 100
+
       
   dist += node.depth
 
   return dist
 
+  # dist = 0 # manhattan for just 1
+  #   for i, list in enumerate(node.state):
+  #     for j, item in enumerate(list):
+  #       if item == "1":
+  #         dist = (j*3) # distance of 1 weighted 3 times more than depth
+
   # dist = 0 # manhattan for all people
-  # for i, list in enumerate(state):
+  # for i, list in enumerate(node.state):
   #   for j, item in enumerate(list):
   #     if item != "x" and item != " ":
-  #       dist += abs(int(item) - (j+1)) + (1-i) 
+  #       dist += (abs(int(item) - (j+1))) * 2
 
-  # global phase
+    # dist = 0 # manhattan for 1 and spaces to be forward
+  # for i, list in enumerate(node.state):
+  #   for j, item in enumerate(list):
+  #     if item == "1":
+  #       dist = j + (1-i)
+
+  
   # dist = 0
   # if phase == 0: #get 1 to pos 3
   #   for i, list in enumerate(state):
@@ -153,24 +168,33 @@ class Node:
     self.parent = parent
     self.depth = depth
 
+  def __lt__(self, other):
+    return computeManhattan(self) + self.depth < computeManhattan(other) + other.depth
+  
+  def __gt__(self, other):
+    return computeManhattan(self) + self.depth > computeManhattan(other) + other.depth
+  
+  def __eq__(self, other):
+    return computeManhattan(self) + self.depth == computeManhattan(other) + other.depth
+
 def manhattan():
     
     queue = PriorityQueue()
     queue.put((0, Node(grid, None, 0)))
 
     seen = {}
+    global phase
 
     while not queue.empty():
     # if True:
       node = queue.get()
-      print(node[0]) #print priority  
-      # global phase
-      # print(phase)
+      print(node[0]) #print priority     
+      print(phase)
       cost = node[0]
       node = node[1]
-      # print(state[0])
-      # print(state[1])
-      # print("")
+      print(node.state[0])
+      print(node.state[1])
+      print("")
       # print(queue.qsize())
       # print(len(seen))
       
