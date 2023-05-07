@@ -3,6 +3,8 @@ from queue import PriorityQueue
 grid = [
     ["x","x","x"," ","x"," ","x"," ","x","x"],
     [" ","2","3","4","5","6","7","8","9","1"]
+    # ['x', 'x', 'x', ' ', 'x', '5', 'x', '8', 'x', 'x'],
+    # ['1', ' ', ' ', ' ', '2', '3', '4', '6', '7', '9']
 ]  
 phase = 0
 
@@ -96,77 +98,20 @@ def computeManhattan(node):
   #           dist += (abs(int(item) - (j+1))) * 100
 
   # manhattan for just 1
+  # for i, list in enumerate(node.state):
+  #   for j, item in enumerate(list):
+  #     if item == "1":
+  #       dist = (j*3) # distance of 1 weighted 3 times more than depth
+
+  # manhattan for just phase
   for i, list in enumerate(node.state):
     for j, item in enumerate(list):
-      if item == "1":
-        dist = (j*3) # distance of 1 weighted 3 times more than depth
+      if item == str(phase+1):
+        dist = abs(phase - j) * 3 # distance of target num weighted 3 times more than depth
       
   dist += node.depth
 
   return dist
-
-  # dist = 0 # manhattan for just 1
-  #   for i, list in enumerate(node.state):
-  #     for j, item in enumerate(list):
-  #       if item == "1":
-  #         dist = (j*3) # distance of 1 weighted 3 times more than depth
-
-  # dist = 0 # manhattan for all people
-  # for i, list in enumerate(node.state):
-  #   for j, item in enumerate(list):
-  #     if item != "x" and item != " ":
-  #       dist += (abs(int(item) - (j+1))) * 2
-
-    # dist = 0 # manhattan for 1 and spaces to be forward
-  # for i, list in enumerate(node.state):
-  #   for j, item in enumerate(list):
-  #     if item == "1":
-  #       dist = j + (1-i)
-
-  
-  # dist = 0
-  # if phase == 0: #get 1 to pos 3
-  #   for i, list in enumerate(state):
-  #     for j, item in enumerate(list):
-  #       if item == "1":
-  #         dist += abs(-3 + j)
-  #   if dist == 0:
-  #     phase += 1
-
-  # elif phase == 1: # get 1 to pos 3 but up
-  #   for i, list in enumerate(state):
-  #     for j, item in enumerate(list):
-  #       if item == "1":
-  #         dist += abs(-3 + j) + i
-  #   if dist == 0:
-  #     phase += 1
-
-  # elif phase == 2: #get all 3 spaces in front 
-  #   for i, list in enumerate(state):
-  #     for j, item in enumerate(list):
-  #       if item == "1":
-  #         dist += abs(-3 + j) + i
-  #       if item == " ":
-  #         dist += j + (1-i)
-  #   if dist == 0:
-  #     phase += 1
-
-  # elif phase == 3: #get 1 to the front
-  #   for i, list in enumerate(state):
-  #     for j, item in enumerate(list):
-  #       if item == "1":
-  #         dist += j + (1-i)
-  #   if dist == 0:
-  #     phase += 1
-
-  # elif phase == 4: #organize the rest
-  #   for i, list in enumerate(state):
-  #     for j, item in enumerate(list):
-  #       if item != "x" and item != " ":
-  #         dist += abs(int(item) - (j+1)) + (1-i)
-
-
-  
 
 class Node:
   def __init__(self, state, parent, depth):
@@ -194,12 +139,12 @@ def manhattan():
     while not queue.empty():
     # if True:
       node = queue.get()
-      print(node[0]) #print priority     
+      # print(node[0]) #print priority     
       print(phase)
       cost = node[0]
       node = node[1]
-      print(node.state[0])
-      print(node.state[1])
+      # print(node.state[0])
+      # print(node.state[1])
       print("")
       # print(queue.qsize())
       # print(len(seen))
@@ -208,10 +153,31 @@ def manhattan():
 
       if node.state[1] == ["1","2","3","4","5","6","7","8","9"," "]:
         print("Solution found!")
-        print("Size of queue: " + str(len(queue)))
+        print("Size of queue: " + str(queue.qsize()))
         print("Explored nodes: " + str(len(seen)))
-        return 
+        return
 
+      #island approach. if island is solved, clear queue and move to next island
+      if node.state[1][phase] == str(phase+1):
+        phase += 1
+        queue = PriorityQueue()
+        queue.put((cost, node))
+
+      # if node.state[1][0] == "1" and phase == 0:
+      #   phase += 1
+      #   queue = PriorityQueue()
+      #   queue.put((cost, node))
+      #   # print("Solution found!")
+      #   # print("Size of queue: " + str(queue.qsize()))
+      #   # print("Explored nodes: " + str(len(seen)))
+      #   # return 
+      # elif node.state[1][1] == "2" and phase == 1:
+      #   phase += 1
+      #   queue = PriorityQueue()
+      #   queue.put((cost, node))
+      #   return
+
+      #queuing function
       for i, entry in enumerate(node.state[1]): #bottom row
         if entry == " ":
           if i != 0: # if not first column, do left swap
