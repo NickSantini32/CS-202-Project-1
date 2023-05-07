@@ -1,10 +1,10 @@
 from queue import PriorityQueue
 
 grid = [
-    ["x","x","x"," ","x"," ","x"," ","x","x"],
-    [" ","2","3","4","5","6","7","8","9","1"]
-    # ['x', 'x', 'x', ' ', 'x', '5', 'x', '8', 'x', 'x'],
-    # ['1', ' ', ' ', ' ', '2', '3', '4', '6', '7', '9']
+    # ["x","x","x"," ","x"," ","x"," ","x","x"],
+    # [" ","2","3","4","5","6","7","8","9","1"]
+    ['x', 'x', 'x', ' ', 'x', '5', 'x', '8', 'x', 'x'],
+    ['1', ' ', ' ', ' ', '2', '3', '4', '6', '7', '9']
 ]  
 phase = 0
 
@@ -25,7 +25,7 @@ def addIfNotSeen(state, queue, seen):
 
 def addIfNotSeenPriority(node, queue, seen):
   if (makeHash(node.state) not in seen):
-    queue.put((computeManhattan(node), node))
+    queue.put((computeManhattanDist(node), node))
     seen.update({makeHash(node.state): node.parent})
     # print(makeHash(state))
 
@@ -81,34 +81,17 @@ def uniform():
       #   print("")
 
 
-def computeManhattan(node):
+def computeManhattanDist(node):
   global phase
   dist = 0
-
-  # if phase < 7:
-  #   dist = 0 # manhattan for just each square in order (DP approach ish?)
-  #   for i, list in enumerate(node.state):
-  #     for j, item in enumerate(list):
-  #       if item != "x" and item != " ":         
-  #         if item == str(phase+1): # target soldier manhattan distance           
-  #           dist += (abs(int(item) - (j+1))) * 3
-  #           if (abs(int(item) - (j+1))) * 3 == 0: #if target soldier is in his position, move to next phase
-  #             phase += 1
-  #         elif int(item) < phase+1: # moving soldiers that are solved adds large penalty
-  #           dist += (abs(int(item) - (j+1))) * 100
-
-  # manhattan for just 1
-  # for i, list in enumerate(node.state):
-  #   for j, item in enumerate(list):
-  #     if item == "1":
-  #       dist = (j*3) # distance of 1 weighted 3 times more than depth
 
   # manhattan for just phase
   for i, list in enumerate(node.state):
     for j, item in enumerate(list):
       if item == str(phase+1):
-        dist = abs(phase - j) * 3 # distance of target num weighted 3 times more than depth
+        dist = (abs(phase - j)) * 3 + (1-i) # distance of target num weighted 3 times more than depth
       
+  dist += (9 - phase) * 500
   dist += node.depth
 
   return dist
@@ -120,13 +103,13 @@ class Node:
     self.depth = depth
 
   def __lt__(self, other):
-    return computeManhattan(self) + self.depth < computeManhattan(other) + other.depth
+    return computeManhattanDist(self) + self.depth < computeManhattanDist(other) + other.depth
   
   def __gt__(self, other):
-    return computeManhattan(self) + self.depth > computeManhattan(other) + other.depth
+    return computeManhattanDist(self) + self.depth > computeManhattanDist(other) + other.depth
   
   def __eq__(self, other):
-    return computeManhattan(self) + self.depth == computeManhattan(other) + other.depth
+    return computeManhattanDist(self) + self.depth == computeManhattanDist(other) + other.depth
 
 def manhattan():
     
@@ -134,48 +117,63 @@ def manhattan():
     queue.put((0, Node(grid, None, 0)))
 
     seen = {}
+    count=0
     global phase
 
     while not queue.empty():
     # if True:
       node = queue.get()
       # print(node[0]) #print priority     
-      print(phase)
+      # print(phase)
       cost = node[0]
       node = node[1]
       # print(node.state[0])
       # print(node.state[1])
-      print("")
+      
       # print(queue.qsize())
       # print(len(seen))
+      # print("")
       
     #for state in queue:\
 
+      # if phase == 9:
+      #   count += 1
+      #   while not queue.empty():
+      #     temp = queue.get()
+      #     print(temp[0])
+      #     print(temp[1].state[0])
+      #     print(temp[1].state[1])
+      #     print("")
+      #   return
+
+      # if count == 10:
+        
+      
       if node.state[1] == ["1","2","3","4","5","6","7","8","9"," "]:
         print("Solution found!")
         print("Size of queue: " + str(queue.qsize()))
         print("Explored nodes: " + str(len(seen)))
+        # while not queue.empty():
+        #   temp = queue.get()
+        #   print(temp[0])
+        #   print(temp[1].state[0])
+        #   print(temp[1].state[1])
+        #   print("")
         return
 
-      #island approach. if island is solved, clear queue and move to next island
+      #island approach. if we make it to an island, clear queue and move towards next island
       if node.state[1][phase] == str(phase+1):
         phase += 1
-        queue = PriorityQueue()
-        queue.put((cost, node))
+        # queue = PriorityQueue()
+        # newQ = PriorityQueue()
+        # while not queue.empty():
+        #   temp = queue.get()
+        #   newQ.put((temp[0] + 500, temp[1]))
 
-      # if node.state[1][0] == "1" and phase == 0:
-      #   phase += 1
-      #   queue = PriorityQueue()
-      #   queue.put((cost, node))
-      #   # print("Solution found!")
-      #   # print("Size of queue: " + str(queue.qsize()))
-      #   # print("Explored nodes: " + str(len(seen)))
-      #   # return 
-      # elif node.state[1][1] == "2" and phase == 1:
-      #   phase += 1
-      #   queue = PriorityQueue()
-      #   queue.put((cost, node))
-      #   return
+        # queue = newQ
+        # queue.put((cost, node))
+
+
 
       #queuing function
       for i, entry in enumerate(node.state[1]): #bottom row
