@@ -1,10 +1,10 @@
 from queue import PriorityQueue
 
 grid = [
-    # ["x","x","x"," ","x"," ","x"," ","x","x"],
-    # [" ","2","3","4","5","6","7","8","9","1"]
-    ['x', 'x', 'x', ' ', 'x', '5', 'x', '8', 'x', 'x'],
-    ['1', ' ', ' ', ' ', '2', '3', '4', '6', '7', '9']
+    ["x","x","x"," ","x"," ","x"," ","x","x"],
+    [" ","2","3","4","5","6","7","8","9","1"]
+    # ['x', 'x', 'x', ' ', 'x', '5', 'x', '8', 'x', 'x'],
+    # ['1', ' ', ' ', ' ', '2', '3', '4', '6', '7', '9']
 ]  
 phase = 0
 
@@ -26,8 +26,7 @@ def addIfNotSeen(state, queue, seen):
 def addIfNotSeenPriority(node, queue, seen):
   if (makeHash(node.state) not in seen):
     queue.put((computeManhattanDist(node), node))
-    seen.update({makeHash(node.state): node.parent})
-    # print(makeHash(state))
+    seen.update({makeHash(node.state): True})
 
 def uniform():
     
@@ -96,6 +95,17 @@ def computeManhattanDist(node):
 
   return dist
 
+def getTraceback(node):
+  trace = []
+  cur = node
+  while cur.state[0] != grid[0] or cur.state[1] != grid[1]:
+    trace.append(cur)
+    cur = cur.parent
+
+  trace.append(cur)
+  trace.reverse()
+  return trace
+
 class Node:
   def __init__(self, state, parent, depth):
     self.state = state
@@ -109,7 +119,7 @@ class Node:
     return computeManhattanDist(self) + self.depth > computeManhattanDist(other) + other.depth
   
   def __eq__(self, other):
-    return computeManhattanDist(self) + self.depth == computeManhattanDist(other) + other.depth
+    return self.state[0] == other.state[0] and self.state[1] == other.state[1]
 
 def manhattan():
     
@@ -117,7 +127,6 @@ def manhattan():
     queue.put((0, Node(grid, None, 0)))
 
     seen = {}
-    count=0
     global phase
 
     while not queue.empty():
@@ -133,50 +142,29 @@ def manhattan():
       # print(queue.qsize())
       # print(len(seen))
       # print("")
-      
-    #for state in queue:\
 
-      # if phase == 9:
-      #   count += 1
-      #   while not queue.empty():
-      #     temp = queue.get()
-      #     print(temp[0])
-      #     print(temp[1].state[0])
-      #     print(temp[1].state[1])
-      #     print("")
-      #   return
-
-      # if count == 10:
-        
       
       if node.state[1] == ["1","2","3","4","5","6","7","8","9"," "]:
         print("Solution found!")
         print("Size of queue: " + str(queue.qsize()))
         print("Explored nodes: " + str(len(seen)))
-        # while not queue.empty():
-        #   temp = queue.get()
-        #   print(temp[0])
-        #   print(temp[1].state[0])
-        #   print(temp[1].state[1])
-        #   print("")
+        print("Depth: " + str(node.depth))
+        print("")
+        print("Traceback: ")
+        trace = getTraceback(node)
+        for t in trace:
+          print(t.state[0])
+          print(t.state[1])
+          print("")
         return
 
       #island approach. if we make it to an island, clear queue and move towards next island
       if node.state[1][phase] == str(phase+1):
         phase += 1
-        # queue = PriorityQueue()
-        # newQ = PriorityQueue()
-        # while not queue.empty():
-        #   temp = queue.get()
-        #   newQ.put((temp[0] + 500, temp[1]))
-
-        # queue = newQ
-        # queue.put((cost, node))
-
-
 
       #queuing function
-      for i, entry in enumerate(node.state[1]): #bottom row
+      #TODO: add moves of more than one space
+      for i, entry in enumerate(node.state[1]): #left right
         if entry == " ":
           if i != 0: # if not first column, do left swap
             new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1)
@@ -190,7 +178,7 @@ def manhattan():
             new_node.state[1][i+1] = node.state[1][i]
             addIfNotSeenPriority(new_node, queue, seen)
 
-      for i, entry in enumerate(node.state[0]): #top row
+      for i, entry in enumerate(node.state[0]): #up down
         if entry != "x":
           if entry == " " and node.state[1][i] != " ": # if empty and bottom is not empty, do down swap
             new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1)
