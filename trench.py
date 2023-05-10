@@ -1,12 +1,14 @@
 from queue import PriorityQueue
 
 grid = [
-    ["x","x","x"," ","x"," ","x"," ","x","x"],
-    [" ","2","3","4","5","6","7","8","9","1"]
+    # ["x","x","x"," ","x"," ","x"," ","x","x"],
+    # [" ","2","3","4","5","6","7","8","9","1"]
     # ['x', 'x', 'x', ' ', 'x', '5', 'x', '8', 'x', 'x'],
     # ['1', ' ', ' ', ' ', '2', '3', '4', '6', '7', '9']
+    ['x', 'x', 'x', ' ', 'x', '5', 'x', '7', 'x', 'x'],
+    ['1', ' ', ' ', ' ', '2', '3', '4', '6', '9', '8']
 ]  
-phase = 0
+phase = 0 # phase + 1 = the number that the heuristic is trying to put into its position
 
 def makeHash(state):
   str = ""
@@ -17,70 +19,32 @@ def makeHash(state):
 
   return str
 
-def addIfNotSeen(state, queue, seen):
-  if (makeHash(state) not in seen):
-    queue.append(state)
-    seen.update({makeHash(state): True})
-    # print(makeHash(state))
+def addToQueueIfNotSeen(state, queue, seen, type):
+  if type == "manhattan":
+      addIfNotSeenManhattan(state, queue, seen)
+    
+  elif type == "uniform":
+      addIfNotSeenUniform(state, queue, seen)
 
-def addIfNotSeenPriority(node, queue, seen):
+  elif type == "misplaced":
+      addIfNotSeenMissingTile(state, queue, seen)
+
+def addIfNotSeenUniform(node, queue, seen):
+  if (makeHash(node.state) not in seen):
+    queue.put((node.depth, node))
+    seen.update({makeHash(node.state): True})
+
+def addIfNotSeenManhattan(node, queue, seen):
   if (makeHash(node.state) not in seen):
     queue.put((computeManhattanDist(node), node))
     seen.update({makeHash(node.state): True})
 
-def uniform():
-    
-    queue = [grid]
-    seen = {}
+def addIfNotSeenMissingTile(node, queue, seen):
+  if (makeHash(node.state) not in seen):
+    queue.put((computeMissingTileDist(node), node))
+    seen.update({makeHash(node.state): True})
 
-    while len(queue) > 0:
-    # if True:
-      state = queue.pop(0)
-      # print(len(queue))
-      # print(len(seen))
-      
-    #for state in queue:\
-
-      if state[1] == ["1","2","3","4","5","6","7","8","9"," "]:
-        print("Solution found!")
-        print("Size of queue: " + str(len(queue)))
-        print("Explored nodes: " + str(len(seen)))
-        return 
-
-      for i, entry in enumerate(state[1]): #bottom row
-        if entry == " ":
-          if i != 0: # if not first column, do left swap
-            new_state = [list.copy(state[0]), list.copy(state[1])]
-            new_state[1][i] = state[1][i-1]
-            new_state[1][i-1] = state[1][i]
-            addIfNotSeen(new_state, queue, seen)
-
-          if i != len(state[1])-1: # if not last column, do right swap
-            new_state = [list.copy(state[0]), list.copy(state[1])]
-            new_state[1][i] = state[1][i+1]
-            new_state[1][i+1] = state[1][i]
-            addIfNotSeen(new_state, queue, seen)
-
-      for i, entry in enumerate(state[0]): #top row
-        if entry != "x":
-          if entry == " " and state[1][i] != " ": # if empty and bottom is not empty, do down swap
-            new_state = [list.copy(state[0]), list.copy(state[1])]
-            new_state[0][i], new_state[1][i] = state[1][i], state[0][i]
-            addIfNotSeen(new_state, queue, seen)
-
-          if entry != " " and state[1][i] == " ": # if top is not empty and bottom is empty, do up swap
-            new_state = [list.copy(state[0]), list.copy(state[1])]
-            new_state[0][i], new_state[1][i] = state[1][i], state[0][i]
-            addIfNotSeen(new_state, queue, seen)
-
-      # print("queue")
-      # for t in queue:
-      #   print(t[0])
-      #   print(t[1])
-      #   print("")
-
-
-def computeManhattanDist(node):
+def computeManhattanDist(node): #generates custom manhattan distance heuristic
   global phase
   dist = 0
 
@@ -94,6 +58,15 @@ def computeManhattanDist(node):
   dist += node.depth
 
   return dist
+
+def computeMissingTileDist(node):
+  state = node.state
+  dist = 0
+  for i, item in enumerate(state[0]):
+    if i < 8 and item != str(i+1):
+      dist += 1
+
+  return (dist * 2) + node.depth
 
 def getTraceback(node):
   trace = []
@@ -121,21 +94,32 @@ class Node:
   def __eq__(self, other):
     return self.state[0] == other.state[0] and self.state[1] == other.state[1]
 
-def manhattan():
+def search(type):
     
     queue = PriorityQueue()
     queue.put((0, Node(grid, None, 0)))
 
     seen = {}
-    global phase
+    global phase #used for custom manhattan heuristic
 
     while not queue.empty():
-    # if True:
-      node = queue.get()
-      # print(node[0]) #print priority     
-      # print(phase)
-      cost = node[0]
+      node = queue.get() 
       node = node[1]
+
+      if type == "manhattan" :
+        #island approach. if we make it to an island, move towards next island
+        while node.state[1][phase] == str(phase+1):
+          phase += 1
+
+        #if we need to go back an island, regress the phase
+        temp = 0
+        while temp < phase:
+          if (node.state[1][temp] != str(temp+1)):
+            phase = temp + 1
+            break
+          temp += 1
+
+      # print(phase)
       # print(node.state[0])
       # print(node.state[1])
       
@@ -143,7 +127,7 @@ def manhattan():
       # print(len(seen))
       # print("")
 
-      
+      #solution found
       if node.state[1] == ["1","2","3","4","5","6","7","8","9"," "]:
         print("Solution found!")
         print("Size of queue: " + str(queue.qsize()))
@@ -158,25 +142,26 @@ def manhattan():
           print("")
         return
 
-      #island approach. if we make it to an island, clear queue and move towards next island
-      if node.state[1][phase] == str(phase+1):
-        phase += 1
+      
 
       #queuing function
-      #TODO: add moves of more than one space
       for i, entry in enumerate(node.state[1]): #left right
-        if entry == " ":
-          if i != 0: # if not first column, do left swap
+        if entry != " ": #if entry is not empty
+          j = i - 1 
+          while j >= 0 and node.state[1][j] == " ": #while left is empty and not out of bounds
             new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1)
-            new_node.state[1][i] = node.state[1][i-1]
-            new_node.state[1][i-1] = node.state[1][i]
-            addIfNotSeenPriority(new_node, queue, seen)
+            new_node.state[1][i] = node.state[1][j]
+            new_node.state[1][j] = node.state[1][i]
+            addToQueueIfNotSeen(new_node, queue, seen, type)
+            j -= 1
 
-          if i != len(node.state[1])-1: # if not last column, do right swap
+          j = i + 1
+          while j < len(node.state[1]) and node.state[1][j] == " ": #while right is empty and not out of bounds
             new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1)
-            new_node.state[1][i] = node.state[1][i+1]
-            new_node.state[1][i+1] = node.state[1][i]
-            addIfNotSeenPriority(new_node, queue, seen)
+            new_node.state[1][i] = node.state[1][j]
+            new_node.state[1][j] = node.state[1][i]
+            addToQueueIfNotSeen(new_node, queue, seen, type)
+            j += 1
 
       for i, entry in enumerate(node.state[0]): #up down
         if entry != "x":
@@ -184,16 +169,21 @@ def manhattan():
             new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1)
             new_node.state[0][i] = node.state[1][i]
             new_node.state[1][i] = node.state[0][i]
-            addIfNotSeenPriority(new_node, queue, seen)
+            addToQueueIfNotSeen(new_node, queue, seen, type)
 
           if entry != " " and node.state[1][i] == " ": # if top is not empty and bottom is empty, do up swap
             new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1)
             new_node.state[0][i] = node.state[1][i]
             new_node.state[1][i] = node.state[0][i]
-            addIfNotSeenPriority(new_node, queue, seen)
+            addToQueueIfNotSeen(new_node, queue, seen, type)
+
+    #queue is empty
+    print("no solution found")
+    return 
           
-# uniform() 
-manhattan()
+# search("uniform")
+search("misplaced")
+# search("manhattan")
 
 
 
