@@ -184,6 +184,7 @@ def search(type):
 # search("uniform")
 search("misplaced")
 # search("manhattan")
+e
 
 
 
