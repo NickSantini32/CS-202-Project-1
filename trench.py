@@ -44,6 +44,7 @@ def addIfNotSeenMissingTile(node, queue, seen):
     queue.put((computeMissingTileDist(node), node))
     seen.update({makeHash(node.state): True})
 
+#eliminate phase by just doing 500 * each unsolved soldier
 def computeManhattanDist(node): #generates custom manhattan distance heuristic
   global phase
   dist = 0
