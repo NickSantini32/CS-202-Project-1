@@ -1,12 +1,19 @@
 from queue import PriorityQueue
+import timeit
 
 grid = [
-    ["x","x","x"," ","x"," ","x"," ","x","x"],
+    ["x","x","x"," ","x"," ","x"," ","x","x"], #given case (3)
     [" ","2","3","4","5","6","7","8","9","1"]
-    # ['x', 'x', 'x', ' ', 'x', '5', 'x', '8', 'x', 'x'],
+    # ['x', 'x', 'x', ' ', 'x', '5', 'x', '8', 'x', 'x'], #case 1
     # ['1', ' ', ' ', ' ', '2', '3', '4', '6', '7', '9']
-    # ['x', 'x', 'x', ' ', 'x', '5', 'x', '7', 'x', 'x'],
+    # ['x', 'x', 'x', ' ', 'x', '5', 'x', '7', 'x', 'x'], #case 2
     # ['1', ' ', ' ', ' ', '2', '3', '4', '6', '9', '8']
+    # ['x', 'x', 'x', ' ', 'x', ' ', 'x', ' ', 'x', 'x'], #random case 3
+    # ['2', '5', '7', ' ', '8', '1', '9', '3', '4', '6']
+    # ['x', 'x', 'x', ' ', 'x', ' ', 'x', ' ', 'x', 'x'], #random case 4 
+    # ['9', '5', '7', ' ', '1', '6', '8', '3', '4', '2']
+    # ['x', 'x', 'x', ' ', 'x', ' ', 'x', ' ', 'x', 'x'], #random case 5
+    # ['8', '2', '1', '7', ' ', '9', '6', '4', '5', '3']
 ]  
 phase = 0 # phase + 1 = the number that the heuristic is trying to put into its position
 
@@ -76,7 +83,7 @@ def computeManhattanDist(node):
       if item != " " and item != "x":
         dist += (abs(int(item) - (j+1))) * 3 + (1-i) # distance of target num weighted 3 times more than depth
       
-  dist += node.depth
+  dist += node.depth * 3
 
   return dist
 
@@ -87,7 +94,7 @@ def computeMissingTileDist(node):
     if i < 8 and item != str(i+1):
       dist += 1
 
-  return (dist * 2) + node.depth
+  return dist + node.depth
 
 def getTraceback(node):
   trace = []
@@ -170,12 +177,12 @@ def search(type):
         print("Explored nodes: " + str(len(seen)))
         print("Depth: " + str(node.depth))
         print("")
-        print("Traceback: ")
-        trace = getTraceback(node)
-        for t in trace:
-          print(t.state[0])
-          print(t.state[1])
-          print("")
+        # print("Traceback: ")
+        # trace = getTraceback(node)
+        # for t in trace:
+        #   print(t.state[0])
+        #   print(t.state[1])
+        #   print("")
         return    
 
       #queuing function
@@ -214,12 +221,19 @@ def search(type):
     #queue is empty
     print("no solution found")
     return 
-          
-# search("uniform")
-# search("misplaced")
-search("manhattan")
-search("manhattan custom")
 
+# t = timeit.timeit('search("uniform")', globals=globals(), number=1)
+# print("Time: " + str(t))
+# print("")
+t = timeit.timeit('search("misplaced")', globals=globals(), number=1)
+print("Time: " + str(t))
+# print("")
+# t = timeit.timeit('search("manhattan")', globals=globals(), number=1)
+# print("Time: " + str(t))
+# print("")
+# t = timeit.timeit('search("manhattan custom")', globals=globals(), number=1)
+# print("Time: " + str(t))
+# print("")
 
 
 
