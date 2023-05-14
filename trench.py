@@ -1,12 +1,12 @@
 from queue import PriorityQueue
 
 grid = [
-    # ["x","x","x"," ","x"," ","x"," ","x","x"],
-    # [" ","2","3","4","5","6","7","8","9","1"]
+    ["x","x","x"," ","x"," ","x"," ","x","x"],
+    [" ","2","3","4","5","6","7","8","9","1"]
     # ['x', 'x', 'x', ' ', 'x', '5', 'x', '8', 'x', 'x'],
     # ['1', ' ', ' ', ' ', '2', '3', '4', '6', '7', '9']
-    ['x', 'x', 'x', ' ', 'x', '5', 'x', '7', 'x', 'x'],
-    ['1', ' ', ' ', ' ', '2', '3', '4', '6', '9', '8']
+    # ['x', 'x', 'x', ' ', 'x', '5', 'x', '7', 'x', 'x'],
+    # ['1', ' ', ' ', ' ', '2', '3', '4', '6', '9', '8']
 ]  
 phase = 0 # phase + 1 = the number that the heuristic is trying to put into its position
 
@@ -20,8 +20,8 @@ def makeHash(state):
   return str
 
 def addToQueueIfNotSeen(state, queue, seen, type):
-  if type == "manhattan":
-      addIfNotSeenManhattan(state, queue, seen)
+  if type == "manhattan custom":
+      addIfNotSeenManhattanCustom(state, queue, seen)
     
   elif type == "uniform":
       addIfNotSeenUniform(state, queue, seen)
@@ -29,14 +29,22 @@ def addToQueueIfNotSeen(state, queue, seen, type):
   elif type == "misplaced":
       addIfNotSeenMissingTile(state, queue, seen)
 
+  elif type == "manhattan":
+      addIfNotSeenManhattan(state, queue, seen)
+
+def addIfNotSeenManhattan(node, queue, seen):
+  if (makeHash(node.state) not in seen):
+    queue.put((computeManhattanDist(node), node))
+    seen.update({makeHash(node.state): True})
+
 def addIfNotSeenUniform(node, queue, seen):
   if (makeHash(node.state) not in seen):
     queue.put((node.depth, node))
     seen.update({makeHash(node.state): True})
 
-def addIfNotSeenManhattan(node, queue, seen):
+def addIfNotSeenManhattanCustom(node, queue, seen):
   if (makeHash(node.state) not in seen):
-    queue.put((computeManhattanDist(node), node))
+    queue.put((computeManhattanDistCustom(node), node))
     seen.update({makeHash(node.state): True})
 
 def addIfNotSeenMissingTile(node, queue, seen):
@@ -45,7 +53,7 @@ def addIfNotSeenMissingTile(node, queue, seen):
     seen.update({makeHash(node.state): True})
 
 #eliminate phase by just doing 500 * each unsolved soldier
-def computeManhattanDist(node): #generates custom manhattan distance heuristic
+def computeManhattanDistCustom(node): #generates custom manhattan distance heuristic
   global phase
   dist = 0
 
@@ -56,6 +64,18 @@ def computeManhattanDist(node): #generates custom manhattan distance heuristic
         dist = (abs(phase - j)) * 3 + (1-i) # distance of target num weighted 3 times more than depth
       
   dist += (9 - phase) * 500
+  dist += node.depth
+
+  return dist
+
+def computeManhattanDist(node): 
+  dist = 0
+
+  for i, list in enumerate(node.state):
+    for j, item in enumerate(list):
+      if item != " " and item != "x":
+        dist += (abs(int(item) - (j+1))) * 3 + (1-i) # distance of target num weighted 3 times more than depth
+      
   dist += node.depth
 
   return dist
@@ -81,24 +101,38 @@ def getTraceback(node):
   return trace
 
 class Node:
-  def __init__(self, state, parent, depth):
+  def __init__(self, state, parent, depth, type):
     self.state = state
     self.parent = parent
     self.depth = depth
+    self.type = type #heuristic type
 
   def __lt__(self, other):
-    return computeManhattanDist(self) + self.depth < computeManhattanDist(other) + other.depth
+    return self.evaluateBasedOnType() < other.evaluateBasedOnType()
   
   def __gt__(self, other):
-    return computeManhattanDist(self) + self.depth > computeManhattanDist(other) + other.depth
+    return self.evaluateBasedOnType() > other.evaluateBasedOnType()
   
   def __eq__(self, other):
     return self.state[0] == other.state[0] and self.state[1] == other.state[1]
+  
+  def evaluateBasedOnType(self):
+    if self.type == "manhattan custom":
+      return computeManhattanDistCustom(self)
+    
+    elif self.type == "uniform":
+      return self.depth
+
+    elif self.type == "misplaced":
+      return computeMissingTileDist(self)
+
+    elif self.type == "manhattan":
+      return computeManhattanDist(self)
 
 def search(type):
     
     queue = PriorityQueue()
-    queue.put((0, Node(grid, None, 0)))
+    queue.put((0, Node(grid, None, 0, type)))
 
     seen = {}
     global phase #used for custom manhattan heuristic
@@ -107,7 +141,7 @@ def search(type):
       node = queue.get() 
       node = node[1]
 
-      if type == "manhattan" :
+      if type == "manhattan custom" :
         #island approach. if we make it to an island, move towards next island
         while node.state[1][phase] == str(phase+1):
           phase += 1
@@ -131,6 +165,7 @@ def search(type):
       #solution found
       if node.state[1] == ["1","2","3","4","5","6","7","8","9"," "]:
         print("Solution found!")
+        print("Algorithm: " + type)
         print("Size of queue: " + str(queue.qsize()))
         print("Explored nodes: " + str(len(seen)))
         print("Depth: " + str(node.depth))
@@ -141,16 +176,14 @@ def search(type):
           print(t.state[0])
           print(t.state[1])
           print("")
-        return
-
-      
+        return    
 
       #queuing function
       for i, entry in enumerate(node.state[1]): #left right
         if entry != " ": #if entry is not empty
           j = i - 1 
           while j >= 0 and node.state[1][j] == " ": #while left is empty and not out of bounds
-            new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1)
+            new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1, type)
             new_node.state[1][i] = node.state[1][j]
             new_node.state[1][j] = node.state[1][i]
             addToQueueIfNotSeen(new_node, queue, seen, type)
@@ -158,7 +191,7 @@ def search(type):
 
           j = i + 1
           while j < len(node.state[1]) and node.state[1][j] == " ": #while right is empty and not out of bounds
-            new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1)
+            new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1, type)
             new_node.state[1][i] = node.state[1][j]
             new_node.state[1][j] = node.state[1][i]
             addToQueueIfNotSeen(new_node, queue, seen, type)
@@ -167,13 +200,13 @@ def search(type):
       for i, entry in enumerate(node.state[0]): #up down
         if entry != "x":
           if entry == " " and node.state[1][i] != " ": # if empty and bottom is not empty, do down swap
-            new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1)
+            new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1, type)
             new_node.state[0][i] = node.state[1][i]
             new_node.state[1][i] = node.state[0][i]
             addToQueueIfNotSeen(new_node, queue, seen, type)
 
           if entry != " " and node.state[1][i] == " ": # if top is not empty and bottom is empty, do up swap
-            new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1)
+            new_node = Node([list.copy(node.state[0]), list.copy(node.state[1])], node, node.depth+1, type)
             new_node.state[0][i] = node.state[1][i]
             new_node.state[1][i] = node.state[0][i]
             addToQueueIfNotSeen(new_node, queue, seen, type)
@@ -183,8 +216,9 @@ def search(type):
     return 
           
 # search("uniform")
-search("misplaced")
-# search("manhattan")
+# search("misplaced")
+search("manhattan")
+search("manhattan custom")
 
 
 
