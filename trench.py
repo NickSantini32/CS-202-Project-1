@@ -1,7 +1,7 @@
 from queue import PriorityQueue
 import timeit
 
-grid = [
+grid = [ #uncomment which input case you would like to use
     ["x","x","x"," ","x"," ","x"," ","x","x"], #given case (3)
     [" ","2","3","4","5","6","7","8","9","1"]
     # ['x', 'x', 'x', ' ', 'x', '5', 'x', '8', 'x', 'x'], #case 1
@@ -177,12 +177,12 @@ def search(type):
         print("Explored nodes: " + str(len(seen)))
         print("Depth: " + str(node.depth))
         print("")
-        # print("Traceback: ")
-        # trace = getTraceback(node)
-        # for t in trace:
-        #   print(t.state[0])
-        #   print(t.state[1])
-        #   print("")
+        print("Traceback: ")
+        trace = getTraceback(node)
+        for t in trace:
+          print(t.state[0])
+          print(t.state[1])
+          print("")
         return    
 
       #queuing function
@@ -222,18 +222,22 @@ def search(type):
     print("no solution found")
     return 
 
-# t = timeit.timeit('search("uniform")', globals=globals(), number=1)
-# print("Time: " + str(t))
-# print("")
+#comment out the blocks you dont want to run
+t = timeit.timeit('search("uniform")', globals=globals(), number=1)
+print("Time: " + str(t))
+print("")
+
 t = timeit.timeit('search("misplaced")', globals=globals(), number=1)
 print("Time: " + str(t))
-# print("")
-# t = timeit.timeit('search("manhattan")', globals=globals(), number=1)
-# print("Time: " + str(t))
-# print("")
-# t = timeit.timeit('search("manhattan custom")', globals=globals(), number=1)
-# print("Time: " + str(t))
-# print("")
+print("")
+
+t = timeit.timeit('search("manhattan")', globals=globals(), number=1)
+print("Time: " + str(t))
+print("")
+
+t = timeit.timeit('search("manhattan custom")', globals=globals(), number=1)
+print("Time: " + str(t))
+print("")
 
 
 
